@@ -1,0 +1,36 @@
+#!/usr/bin/python
+
+import argparse
+import sys
+
+import numpy
+from scipy import stats
+
+"""Various confidence interval related functions"""
+
+PARSER = argparse.ArgumentParser(description='Calculate various confidence intervals')
+PARSER.add_argument(
+    '--windows', '-w',
+    action='store_true',
+    help='Output a sequence of confidence intervals for different window sizes')
+
+def confidence_interval(confidence, values):
+    return stats.t.interval(confidence, len(values)-1, loc=numpy.mean(values), scale=stats.sem(values))
+
+def main():
+    args = PARSER.parse_args()
+    values = map(float, sys.stdin)
+
+    if args.windows:
+        for n in range(2, len(values) -1):
+            subset = values[len(values) - n:]
+            upper, lower = confidence_interval(0.95, subset)
+            print '{:.1f} {:.1f} {:.1f}'.format(upper, numpy.mean(subset), lower)
+
+    else:
+        upper, lower =  confidence_interval(0.95, values)
+        print '{:.1f} {:.1f} {:.1f}'.format(upper, numpy.mean(values), lower)
+
+
+if __name__ == '__main__':
+    main()
