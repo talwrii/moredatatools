@@ -1,15 +1,21 @@
 #!/usr/bin/python
 
+"""Various confidence interval related functions"""
+
 import argparse
 import sys
 
 import numpy
 from scipy import stats
 
-"""Various confidence interval related functions"""
 
 PARSER = argparse.ArgumentParser(description='Calculate various confidence intervals')
-PARSER.add_argument(
+PARSER.add_argument('--confidence', '-c', default=0.95)
+action = PARSER.add_mutually_exclusive_group()
+action.add_argument(
+    '--recent', type=float, metavar='THRESHOLD',
+    help='The confidence interval of a minimal window containing the last data point such that |bound - point_estimate| / point_estimate is less than THRESHOLD for upper and lower bounds')
+action.add_argument(
     '--windows', '-w',
     action='store_true',
     help='Output a sequence of confidence intervals for different window sizes')
@@ -24,11 +30,23 @@ def main():
     if args.windows:
         for n in range(2, len(values) -1):
             subset = values[len(values) - n:]
-            upper, lower = confidence_interval(0.95, subset)
+            upper, lower = confidence_interval(args.confidence, subset)
             print '{:.1f} {:.1f} {:.1f}'.format(upper, numpy.mean(subset), lower)
-
+    elif args.recent:
+        min_ratio = None
+        for n in range(2, len(values) -1):
+            subset = values[len(values) - n:]
+            upper, lower = confidence_interval(args.confidence, subset)
+            mean = float(numpy.mean(subset))
+            ratio = max(numpy.abs(upper - mean) / mean, numpy.abs(mean - lower) / mean)
+            min_ratio = ratio if min_ratio is None else min(min_ratio, ratio)
+            if ratio < args.recent:
+                print '{:.1f} {:.1f} {:.1f}'.format(upper, numpy.mean(subset), lower)
+                return
+        else:
+            raise Exception('We are never that certain (minimum {})'.format(min_ratio))
     else:
-        upper, lower =  confidence_interval(0.95, values)
+        upper, lower =  confidence_interval(args.confidence, values)
         print '{:.1f} {:.1f} {:.1f}'.format(upper, numpy.mean(values), lower)
 
 
