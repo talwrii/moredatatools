@@ -1,0 +1,35 @@
+#!/usr/bin/python
+
+
+
+import argparse
+import sys
+
+import numpy
+
+PARSER = argparse.ArgumentParser(description='Count the number of overlapping bits when the file is shifted by a number of bytes. This can be useful for finding record sizes')
+PARSER.add_argument('--count', '-n', type=int, help='Only show autocorrelations up to this number')
+PARSER.add_argument('filename', type=str)
+
+def eight_bit_pop_count(d):
+    on_off_bits = 0x55
+    two_on_off_bits = 0x33
+    four_on_off_bits = 0x0F
+
+    d = ((d >> 1) & on_off_bits) + (d & on_off_bits)
+    d = ((d >> 2) & two_on_off_bits) + (d & two_on_off_bits)
+    d = ((d >> 4) & four_on_off_bits) + (d & four_on_off_bits)
+    return d.sum()
+
+def main():
+    args = PARSER.parse_args()
+    with open(args.filename) as stream:
+        raw_data = stream.read()
+        data = numpy.array(buffer(raw_data), dtype=numpy.uint8)
+        number_of_ones = eight_bit_pop_count(data)
+
+        for i in range(min(args.count, len(data))):
+            print eight_bit_pop_count(data & numpy.roll(data, i)) / float(number_of_ones)
+
+if __name__ == '__main__':
+    main()
