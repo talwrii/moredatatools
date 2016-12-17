@@ -12,9 +12,11 @@ from scipy import stats
 PARSER = argparse.ArgumentParser(description='Calculate various confidence intervals')
 PARSER.add_argument('--confidence', '-c', default=0.95)
 action = PARSER.add_mutually_exclusive_group()
+
 action.add_argument(
     '--recent', type=float, metavar='THRESHOLD',
     help='The confidence interval of a minimal window containing the last data point such that |bound - point_estimate| / point_estimate is less than THRESHOLD for upper and lower bounds')
+
 action.add_argument(
     '--windows', '-w',
     action='store_true',
